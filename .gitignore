@@ -1,0 +1,14 @@
+node_modules/
+
+# временные файлы проверки/сборки
+.verify/
+_*.mjs
+_extracted/
+
+# локальные настройки Claude Code
+.claude/settings.local.json
+
+# системное
+.DS_Store
+Thumbs.db
+*.log

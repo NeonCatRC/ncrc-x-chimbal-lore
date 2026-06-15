@@ -1,0 +1,260 @@
+<!DOCTYPE html><html lang='ru'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Рассматриваю проблемы проекта Installer-SH в разделе Issues на платформе GitHub</title><style>body{max-width:820px;margin:24px auto;padding:0 16px;font:16px/1.6 -apple-system,Segoe UI,Roboto,sans-serif;color:#1a1a1a}img{max-width:100%;height:auto;display:block;margin:12px auto}.meta{color:#666;font-size:14px;margin-bottom:20px}h1{font-size:24px;line-height:1.3}a{color:#0b62c4}table{border-collapse:collapse}td,th{border:1px solid #ccc;padding:4px}</style></head><body><p><a href='../index.html'>&larr; all articles</a></p><h1>Рассматриваю проблемы проекта Installer-SH в разделе Issues на платформе GitHub</h1><div class='meta'>2026-06-01T22:41:00+03:00 &middot; <a href='https://overclockers.ru/blog/Hard-Workshop/show/256630/rassmatrivaju-problemy-proekta-installer-sh-v-razdele-issues-na-platforme-github'>original</a></div>
+<!-- DEBUG banners enabled: nobanners wrapper NOT detected. start=<p>Недавно была доработана и <a data-link="https://overclockers.ru/blog/Hard-Workshop/show/256127/Bol-shoe-sravnenie-i-t -->
+<p>Недавно была доработана и <a class="over-hiddenlink-html" data-desc="выпущена новая версия формата распространения ПО для Linux и FreeBSD" data-link="https://overclockers.ru/blog/Hard-Workshop/show/256127/Bol-shoe-sravnenie-i-testirovanie-formatov-ustanovki-PO-v-distributivah-Linux-i-FreeBSD-x86-x64">выпущена новая версия формата распространения ПО для Linux и FreeBSD</a> под названием Installer-SH. После этого в формат Installer-SH был успешно <a class="over-hiddenlink-html" data-desc="перепакован графический редактор Krita" data-link="https://overclockers.ru/blog/Hard-Workshop/show/256492/Ukroschenie-ada-zavisimostej-v-Linux-10-let-istorii-Krita-v-odnom-pakete-Installer-SH">перепакован графический редактор Krita</a>. В результате удалось сжать тринадцать версий графического редактора за 10 лет истории выпуска, в единый установочный пакет размером всего ~740 МБ, тогда как эти же версии программы в исходном формате AppImage при хранении весили ~2,5 ГБ.</p>
+<p><img itemprop="image" src="images/733185_O.jpg" style="width: 650px; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></p>
+<p>Более того, новость о выпуске Installer-SH 2.8 была <a class="over-hiddenlink-html" data-desc="опубликована и на ресурсе OpenNET" data-link="https://www.opennet.ru/opennews/art.shtml?num=65535">опубликована и на ресурсе OpenNET</a>, администрация которого действительно работает и выполняет свои обязанности согласно правилам ресурса, в отличие от <a class="over-hiddenlink-html" data-desc="печально известного примера" data-link="https://overclockers.ru/blog/Hard-Workshop/show/255421/Kak-ya-napisal-stat-ju-na-resurse-linux-org-ru-i-ubedilsya-v-toksichnosti-i-predvzyatosti-moderatorov">печально известного примера</a>.</p>
+<p><img itemprop="image" src="images/733097_O.jpg" style="width: 650px; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></p>
+<div class="pip-mat-inner ad-sticly__parent"><!-- other_news_inner_1 2-->
+<!-- Revive Adserver Asynchronous JS Tag - Generated with Revive Adserver v4.1.4 -->
+<!--ins data-revive-zoneid="34" data-revive-id="c1718c342c7254c976f523d07a047f6e" data-revive-ovcats=" :article: :blog: "></ins-->
+<h4 class="ui horizontal left aligned divider header">
+реклама
+</h4>
+<div class="" id="video-container"></div>
+<div id="yandex_rtb_R-A-2368565-71" style="height:400px"></div>
+<!--div class="ui divider"></div-->
+<br/><br/>
+<!-- Yandex.RTB R-A-2368565-71 -->
+<script type="text/javascript">
+var firedYa46 = false;
+window.addEventListener('load', () => {
+if(navigator.userAgent.indexOf("Chrome-Lighthouse") < 0) {
+if (firedYa46 === false) {
+firedYa46 = true;
+setTimeout(() => {
+
+window.yaContextCb.push(()=>{
+Ya.Context.AdvManager.render({
+renderTo: 'yandex_rtb_R-A-2368565-71',
+blockId: 'R-A-2368565-71'
+})
+})
+    
+    }, 3000);
+    }
+    }
+    });
+</script>
+</div><p>Но сейчас речь не об этом. <a class="over-hiddenlink-html" data-desc="Installer-SH" data-link="https://github.com/Shedou/Installer-SH">Installer-SH</a> отлично проявил себя как формат распространения ПО, оставив позади все прочие протестированные способы из мира Linux и FreeBSD. Я надеялся ещё какое-то время оставаться в тени и спокойно работать над проектом в одиночку, продолжая совершенствовать его и внедрять новый функционал, не забывая про исправление ошибок. Но на проект уже обратили внимание.</p>
+<p><img itemprop="image" src="images/733098_O.png" style="width: 650px; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></p>
+<p>Одним прекрасным днём, в разделе Issues, за весьма короткий промежуток времени появилось 47 сообщений о проблемах. Если честно, это выглядит как спам от ботов, что неудивительно, учитывая, как хейтеры любят злоупотреблять накрутками рейтингов с помощью бот-сетей. Так почему бы не накрутить чего-нибудь в репозитории неугодного проекта? Впрочем, не будем с ходу делать поспешных выводов. Давайте разберёмся в ситуации: вдруг что-то полезное извлечём из происходящего.</p>
+<p><img itemprop="image" src="images/733102_O.png" style="width: 650px; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></p>
+<p>С первой же страницы отчётливо видна закономерность: сообщения от пользователя NeonCatRC явно сгенерированы автоматически, так как все они были опубликованы за очень короткий промежуток времени — менее чем за полчаса. Человек не может так быстро написать 47 сообщений с детальными заголовками, если только не подготовился заранее. Но тут серьёзной подготовкой и не пахнет.</p>
+<div class="pip-mat-inner ad-sticly__parent"><!-- other_news_inner_2 -->
+<h4 class="ui horizontal left aligned divider header">
+реклама
+</h4>
+<!-- Yandex.RTB R-A-2368565-28 -->
+<!--div id="yandex_rtb_R-A-2368565-28" style="margin:auto"></div-->
+<div class="hide-mobile">
+<div class="ui grid center aligned">
+<!-- Yandex.RTB R-A-2368565-43 -->
+<div id="yandex_rtb_R-A-2368565-43"></div>
+<script type="text/javascript">
+var firedYa43 = false;
+window.addEventListener('load', () => {
+if(navigator.userAgent.indexOf("Chrome-Lighthouse") < 0) {
+if (firedYa43 === false) {
+firedYa43 = true;
+setTimeout(() => {
+
+window.yaContextCb.push(()=>{
+Ya.Context.AdvManager.render({
+renderTo: 'yandex_rtb_R-A-2368565-43',
+blockId: 'R-A-2368565-43'
+})
+})
+
+    
+    }, 3000);
+    }
+    }
+    });
+</script>
+</div>
+</div>
+<div class="hide-desktop hide-minitablet hide-tablet">
+<!-- Yandex.RTB R-A-2368565-44 -->
+<div id="yandex_rtb_R-A-2368565-44"></div>
+<script type="text/javascript">
+    var firedYa44 = false;
+    window.addEventListener('load', () => {
+    if(navigator.userAgent.indexOf("Chrome-Lighthouse") < 0) {
+    if (firedYa44 === false) {
+    firedYa44 = true;
+    setTimeout(() => {
+
+window.yaContextCb.push(()=>{
+Ya.Context.AdvManager.render({
+renderTo: 'yandex_rtb_R-A-2368565-44',
+blockId: 'R-A-2368565-44'
+})
+})
+    
+    
+    }, 3000);
+    }
+    }
+    });
+    
+</script>
+</div>
+<!--div class="ui divider"></div-->
+<br/><br/>
+<!--script type="text/javascript">
+var firedYa28 = false;
+window.addEventListener('load', () => {
+if(navigator.userAgent.indexOf("Chrome-Lighthouse") < 0) {
+if (firedYa28 === false) {
+firedYa28 = true;
+setTimeout(() => {
+
+window.yaContextCb.push(()=>{
+Ya.Context.AdvManager.render({
+renderTo: 'yandex_rtb_R-A-2368565-28',
+blockId: 'R-A-2368565-28'
+})
+})
+
+    
+    }, 3000);
+    }
+    }
+    });
+</script-->
+</div><p>Уже тот факт, что сообщения так быстро сгенерированы, является серьёзным основанием, чтобы заблокировать такого пользователя и снести всё, что он успел сделать. Некоторые владельцы репозиториев наверняка так и поступили бы, ибо это выглядит как откровенный флуд. Но я вижу в этом новый опыт и потенциально интересную и полезную информацию.</p>
+<p>Если посмотреть на самое верхнее сообщение, можно заметить, что этим всем занимался не человек, а искусственный интеллект. В заголовке указана функция применения локализации и тот факт, что она не загружает локализацию при работе в тихом режиме. Любой человек, разобравшийся в ситуации, понял бы, что нет смысла загружать локализацию, если работа происходит в тихом режиме, так как в этом режиме нет взаимодействия с пользователем, кроме случаев серьёзных ошибок. Загружать локализацию при такой работе — это лишний раз искать подходящий файл в заведомо отведённом для этого каталоге и бессмысленно тратить ресурсы.</p>
+<p><img itemprop="image" src="images/733103_O.jpg" style="width: 650px; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></p>
+<p>Оптимизация инсталлятора фактически была выдана за проблему. Сообщение под номером 45 указывает на устаревший копирайт в файле pack_archives. Я уже давно не вносил в этот файл никаких изменений и логично, что там остался старый копирайт с прежней датой. Странно создавать отдельное сообщение о проблеме по такому поводу, если бы этим занимался реальный человек.</p>
+<p>Туда же и сообщение под номером 43. Костыль для поломанных дистрибутивов Linux действительно указывает на каталог portsoft в домашней директории пользователя, и никуда иначе. Это логично, учитывая, что инсталлятор предназначен в первую очередь для установки софта именно в домашней директории пользователя. Ломает ли это что-либо, если программа установлена в системном режиме, как заявлено в заголовке так называемой проблемы? Конечно, нет.</p>
+<div class="pip-mat-inner ad-sticly__parent"><!-- other_news_inner_3 -->
+<!-- Yandex.RTB R-A-2368565-29 -->
+<h4 class="ui horizontal left aligned divider header">
+реклама
+</h4>
+<div id="yandex_rtb_R-A-2368565-29" style="margin:auto"></div>
+<!--div class="ui divider"></div-->
+<br/><br/>
+<script type="text/javascript">
+var firedYa29 = false;
+window.addEventListener('load', () => {
+if(navigator.userAgent.indexOf("Chrome-Lighthouse") < 0) {
+if (firedYa29 === false) {
+firedYa29 = true;
+setTimeout(() => {
+
+window.yaContextCb.push(()=>{
+Ya.Context.AdvManager.render({
+renderTo: 'yandex_rtb_R-A-2368565-29',
+blockId: 'R-A-2368565-29'
+})
+})
+    
+    }, 3000);
+    }
+    }
+    });
+</script>
+</div><p>Даже если пользователь полностью проигнорировал рекомендуемые режимы установки и упорно всё устанавливал с root-правами, в специальную директорию в корне файловой системы, это ничего не ломает. Да, зайти в каталог не выйдет, но к критическим сбоям это не приводит. Сам костыль от этого не поломается и будет выполнять своё прямое назначение в «поломанных» дистрибутивах Linux, чтобы у пользователя не пропадал раздел в меню приложений, из-за косяков разработчиков дистрибутивов.</p>
+<p><img itemprop="image" src="images/733104_O.jpg" style="width: 650px; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></p>
+<p>Особенно позабавило сообщение под номером 41, указывающее якобы на опечатку, хотя на самом деле оно написано именно так, чтобы пользователь или разработчик визуально не перепутали схожие по написанию слова «clearing» и «creating», если столкнутся с данным сообщением. Да и следующее сообщение, под номером 40, тоже абсурдно, потому что это всего лишь пример для упаковщиков, требующий соответствующей настройки. Оно даже не используется, пока не будет активировано в настройках пакета.</p>
+<p><img itemprop="image" src="images/733106_O.jpg" style="width: 650px; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></p>
+<p>Сомнений больше не осталось: все эти сообщения однозначно сгенерированы искусственным интеллектом, потому что человек, потративший время на изучение проекта, точно не стал бы создавать issue из-за очевидно намеренно оставленных «опечаток» в тексте. Но и списывать со счетов всё это мы не будем, даже если часть сообщений — откровенный мусор.</p>                         
+<table style="width: 100%;">
+<tbody>
+<tr>
+<td style="width: 33.3333%;"><img itemprop="image" src="images/733107_O.jpg" style="width: 100%; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></td>
+<td style="width: 33.3333%;"><img itemprop="image" src="images/733108_O.jpg" style="width: 100%; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></td>
+<td style="width: 33.3333%;"><img itemprop="image" src="images/733109_O.jpg" style="width: 100%; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></td>
+</tr>
+</tbody>
+</table>
+<p>Пока всякие Flatpak и GNOME устраивают ад зависимостей на ровном месте и воюют против ИИ, я же постараюсь извлечь максимальную пользу для своих проектов. Меня, конечно, смущает тот факт, что выдачу искусственного интеллекта никто не проверял на ошибки и заведомо неверные выводы об ошибочности конкретных реализаций инсталлера. Но я не спешу сломя голову выпускать новые версии проектов для имитации бурной деятельности, так что могу себе позволить неторопливо разобрать полсотни сообщений и извлечь из них пользу.</p>
+<p><img itemprop="image" src="images/733111_O.png" style="width: 650px; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></p>
+<div class="pip-mat-inner ad-sticly__parent"><!-- other_news_inner_4 -->
+<!-- Yandex.RTB R-A-2368565-30 -->
+<h4 class="ui horizontal left aligned divider header">
+реклама
+</h4>
+<div id="yandex_rtb_R-A-2368565-30" style="margin:auto"></div>
+<!--div class="ui divider"></div-->
+<br/><br/>
+<script type="text/javascript">
+
+var firedYa30 = false;
+window.addEventListener('load', () => {
+if(navigator.userAgent.indexOf("Chrome-Lighthouse") < 0) {
+if (firedYa30 === false) {
+firedYa30 = true;
+setTimeout(() => {
+
+window.yaContextCb.push(()=>{
+Ya.Context.AdvManager.render({
+renderTo: 'yandex_rtb_R-A-2368565-30',
+blockId: 'R-A-2368565-30'
+})
+})
+    
+    }, 3000);
+    }
+    }
+    });
+    
+</script>
+</div><p>Наверняка есть люди с очень негативным отношением к искусственному интеллекту, да и меня временами пытались затравить, используя ИИ в качестве третьей стороны. Но у меня нет негатива относительно искусственного интеллекта. ИИ может галлюцинировать, может делать откровенно ошибочные выводы, но разве люди не делают всё то же самое? Делают, ещё и имеют гордыню и чувство собственной важности, которые не позволяют изменить мнение, несмотря на доказательства и факты.</p>
+<h2>Issue #32</h2>
+<p>Давайте начнём издалека. Зная, что сообщения об ошибках написаны искусственным интеллектом и явно не проверялись людьми, я не хочу начинать с чего-то, затрагивающего основное тело проекта.</p>
+<p>Речь идёт о файле «for-tests-in-VM-batch-install.sh», предназначенном для упрощения тестирования пакетов. Данный скрипт требует предварительной настройки, но суть не в этом. Заявляется, что в этом скрипте есть опечатка, и она действительно есть; правда, никакого вреда она не наносит, от слова «совсем».</p>                         
+<table style="width: 100%;">
+<tbody>
+<tr>
+<td style="width: 33.3333%;"><img itemprop="image" src="images/733114_O.jpg" style="width: 100%; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></td>
+<td style="width: 33.3333%;"><img itemprop="image" src="images/733115_O.jpg" style="width: 100%; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></td>
+<td style="width: 33.3333%;"><img itemprop="image" src="images/733116_O.jpg" style="width: 100%; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></td>
+</tr>
+</tbody>
+</table>
+<p>Основная же претензия кроется во втором аргументе, при вызове функции InstallFile: мол, значение «sss» бессмысленное. Так и есть, значение не имеет смысла, но и оставлять пустую строку не хотелось при вызове функции, требующей два аргумента для работы. Исправление, конечно, внесу, но оно такое же бессмысленное, как и сама претензия, особенно учитывая крайне маленький размер скрипта.</p>
+<p>Ну и третья претензия затрагивает две переменные внутри функции: мол, они не объявлены как локальные. Тут претензия вполне обоснованная, однако, учитывая, что она предъявлена в контексте скрипта на 50 строк кода, половина из которых — пустота... Ну не знаю. Для разминки сойдёт, заодно приведу скрипт в более человечный вид. Тем более если кто-то захочет использовать данный скрипт как часть более массивной системы, исправление позволит избежать загрязнения глобальной области видимости (global scope). В таком необычном плане использования, исправление действительно может оказаться полезным.</p>
+<p><img itemprop="image" src="images/733117_O.jpg" style="width: 650px; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></p>
+<p>Было ли полезно данное issue? С практической стороны — нет, так как никаких технических проблем оно не решило, хотя и было с пометкой «BUG». О чём, к слову, сказано в конце сообщения: выявленные нюансы не оказывают никакого функционального влияния.</p>
+<p><img itemprop="image" src="images/733140_O.png" style="width: 650px; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></p>
+<p>Была исправлена небольшая опечатка, пара переменных переведена в разряд локальных, ну и значение второго аргумента при вызове функции изменено на более осмысленное. Это можно назвать рефакторингом, но никак не исправлением багов, по крайней мере, если учесть общую простоту и назначение данного вспомогательного скрипта.</p>
+<p>Может показаться, что я обесцениваю сообщения об ошибках и как-то возвышаюсь над всем этим. Нет. Тут просто нет никакой практической пользы от внесённых исправлений при использовании скрипта так, как задумано. Но в любом случае вношу исправления и закрываю «проблему», так как хуже точно не стало.</p>
+<p><img itemprop="image" src="images/733147_O.png" style="width: 650px; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></p>
+<h2>Issue #29</h2>
+<p>Перейдем к сообщению под номером 29, которое затрагивает файл "for-tests-in-VM-create-PortSoft-in-RAM.sh", также предназначенный для упрощения задачи тестирования собираемых пакетов. Основные замечания заключаются в том, что в коде нет проверок данных, вводимых пользователем при выборе размера выделяемой памяти под файловую систему, нет проверок на ошибки при выполнении операций mkdir и mv, а также отмечена возможность коллизии при многократном запуске скрипта.</p>
+<p>Переменная RANDOM действительно предоставляет всего 32 тысячи значений, что при многократном запуске может привести к коллизии имён. Но проблема в том, что данный скрипт предназначен для однократного использования в виртуальной машине и только при необходимости. Снова ИИ не учитывает контекст и назначение инструмента.</p>
+<table style="width: 100%;">
+<tbody>
+<tr>
+<td style="width: 50.0000%;"><img itemprop="image" src="images/733149_O.jpg" style="width: 100%; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></td>
+<td style="width: 50.0000%;"><img itemprop="image" src="images/733150_O.jpg" style="width: 100%; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></td>
+</tr>
+</tbody>
+</table>
+<p>Тем не менее замечания есть, так почему бы не подправить код? Вдруг кто-то попытается многократно использовать скрипт, игнорируя его назначение и суть? Хотя ничего страшного не произойдёт, так как команды просто не сработают, но всё же.</p>
+<p>Начнём с пользовательского ввода и проверки формата. Я решил вообще удалить возможность ввода пользовательских значений в процессе выполнения скрипта, потому что при реальном использовании это было не очень удобно, когда я тестировал пакеты с графическим редактором Krita. Тут лучше упростить скрипт и дать грамотную подсказку в самом начале, чем городить десятиэтажные проверки.</p>
+<p><img itemprop="image" src="images/733156_O.png" style="width: 650px; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></p>
+<p>Ну а остальное было серьёзно переработано вручную, так как простыми исправлениями там было не обойтись. После переработки я обратился к локальному ИИ ёмкостью 7.5 миллиарда параметров для дополнительной проверки и оценки получившегося скрипта. Одна голова — хорошо, но вторая может обнаружить проблемы, не замеченные первой.</p>
+<p>Важно отметить, что переработанный код больше не требует лишних проверок пользовательского ввода и решения проблем ограниченного диапазона генератора случайных чисел, так как все лишние операции были удалены, а код — приведён к более совершенному виду.</p>
+<p><img itemprop="image" src="images/733181_O.jpg" style="width: 650px; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></p>
+<p>Ну а после я протестировал скрипт в реальных условиях. Всё работает правильно.</p>
+<table style="width: 100%;">
+<tbody>
+<tr>
+<td style="width: 50.0000%;"><img itemprop="image" src="images/733182_O.jpg" style="width: 100%; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></td>
+<td style="width: 50.0000%;"><img itemprop="image" src="images/733183_O.jpg" style="width: 100%; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></td>
+</tr>
+</tbody>
+</table>
+<p>Таким образом, мы успешно закрыли 29-е обращение.</p>
+<p><img itemprop="image" src="images/733184_O.jpg" style="width: 650px; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></p>
+<h2>Продолжение следует...</h2>
+<p>Пока что было рассмотрено и закрыто с исправлениями всего 2 обращения из 47. И хотя эту работу полностью мог выполнить ИИ в автоматическом режиме, я проверяю и исправляю всё вручную. Как все уже могли заметить, в первом случае можно было просто внести предложенные исправления, однако во втором — я практически полностью переписал вспомогательный скрипт, чтобы улучшить его на фундаментальном уровне.</p>
+<p>С первого взгляда ситуация выглядела как флуд и попытка насолить владельцу репозитория с проектом, но я решил изучить сгенерированные искусственным интеллектом сообщения и уже извлёк из них реальную пользу. Я бы не взялся за переработку вспомогательных скриптов, если бы не эти сообщения. Пусть они порой и были весьма глупыми, но при грамотном использовании, даже относительно бесполезная информация может оказаться полезной.</p>
+<p>У меня нет времени заниматься исключительно проектом Installer-SH, разгребая полученные замечания относительно исходного кода. Однако двумя проблемами стало меньше, так постепенно можно обработать и остальные сообщения. Но это уже оставим для следующих статей.</p>
+<p>Пока всякие Flatpak и GNOME запрещают принятие софта разработанного с помощью искусственного интеллекта, я вполне успешно использую новые знания и возможности для совершенствования своих проектов. Конечно, для написания полноценных частей кода я не использую ИИ, так как это постепенно привело бы к снижению моих собственных навыков программирования. Но и отказываться от использования ИИ при анализе уже существующего кода было бы глупо.</p>
+<p><img itemprop="image" src="images/733186_O.jpg" style="width: 650px; display: block; vertical-align: top; margin: 5px auto; text-align: center;"/></p>
+<p style="text-align: center;">Благодарю за внимание, больше интересных статей в блоге <a class="over-hiddenlink-html" data-desc="Hard-Workshop" data-link="https://overclockers.ru/blog/Hard-Workshop"><strong>Hard-Workshop</strong></a>.</p>
+</body></html>

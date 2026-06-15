@@ -1,0 +1,13 @@
+# Прод: собирает самодостаточный образ (nginx + сайт + картинки).
+#   cd deploy && docker compose up -d --build
+# Сайт на http://<host>:8080  (TLS вешайте обратным прокси — см. README.md).
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: ncrc-chimbal-lore:latest
+    container_name: ncrc-chimbal-lore
+    ports:
+      - "8080:80"
+    restart: unless-stopped

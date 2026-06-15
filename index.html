@@ -5,27 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Архив · NCRC-x-Chimbal</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Onest:wght@400;500;600;700&family=Golos+Text:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
+  <!-- Self-hosted fonts (никаких сторонних CDN; см. css/fonts.css). -->
+  <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <div id="root"></div>
 
-  <!-- Вендоры с CDN (production-сборки). Версии запинены намеренно. -->
-  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js" crossorigin></script>
+  <!-- React (локальные production-сборки, без стороннего CDN). -->
+  <script src="js/vendor/react.production.min.js"></script>
+  <script src="js/vendor/react-dom.production.min.js"></script>
 
   <!-- Помощники архива (обычные скрипты: window.Anno, window.ReqCounter). -->
   <script src="js/annotations.js"></script>
   <script src="js/requests.js"></script>
 
-  <!-- Компоненты. text/babel → Babel транспилит JSX в браузере.
+  <!-- Компоненты: JSX предкомпилирован в js/build (npm run build).
        Порядок важен: starfield регистрирует window.Starfield до archive. -->
-  <script type="text/babel" data-presets="react" src="js/starfield.jsx"></script>
-  <script type="text/babel" data-presets="react" src="js/archive.jsx"></script>
+  <script src="js/build/starfield.js"></script>
+  <script src="js/build/archive.js"></script>
 </body>
 </html>

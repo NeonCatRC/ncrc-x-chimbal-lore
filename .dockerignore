@@ -1,0 +1,12 @@
+.git
+.gitignore
+**/*.md
+**/page_raw.html
+**/.done
+
+# build-time only — образу нужен лишь js/build (скомпилированный) и js/vendor
+node_modules
+**/*.jsx
+package.json
+package-lock.json
+babel.config.json

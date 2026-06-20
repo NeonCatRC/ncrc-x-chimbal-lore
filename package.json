@@ -4,7 +4,7 @@
   "private": true,
   "description": "Static article archive (self-hosted). JSX is precompiled to plain JS so the browser ships no Babel and no CDN deps.",
   "scripts": {
-    "build": "babel js --out-dir js/build --extensions .jsx"
+    "build": "babel js --out-dir js/build --extensions .jsx && node scripts/build-hash.js"
   },
   "devDependencies": {
     "@babel/cli": "^7.26.4",

@@ -7,6 +7,9 @@ node_modules/
 data/
 overlay/
 
+# предсжатые ассеты (npm run build) — gzip_static, регенерируются
+*.gz
+
 # временные файлы проверки/сборки
 .verify/
 _*.mjs

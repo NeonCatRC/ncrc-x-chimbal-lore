@@ -14,6 +14,25 @@ const LANDING_URL = "https://neoncatrc.github.io/ncrc-x-chimbal/";
 // на 127.0.0.1). Переопределяется через window.CHIMBAL_ADMIN_API.
 const ADMIN_API = (typeof window !== "undefined" && window.CHIMBAL_ADMIN_API) || "http://localhost:8090";
 
+// Ловит ошибку рендера статьи, чтобы не падало всё приложение. key={id} в месте
+// использования сбрасывает состояние при переключении статьи.
+class ErrorBoundary extends React.Component {
+  state = { error: null };
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) { console.error("article render failed", error, info); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="arc-box-red">
+          Не удалось отобразить статью (ошибка рендера).{" "}
+          <a href={this.props.url || "#"} target="_blank" rel="noopener" style={{ color: "#9d4b35", fontWeight: 500 }}>Открыть оригинал ↗</a>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 class Archive extends React.Component {
   state = {
     query: "", activeTags: [], selectedId: null, tagMenuOpen: false,
@@ -53,6 +72,14 @@ class Archive extends React.Component {
     if (this.mainEl) this.mainEl.scrollTop = 0;
   };
 
+  // Теги и их счётчики постоянны после загрузки — считаем один раз, а не в render.
+  computeTags() {
+    const counts = {};
+    this.articles.forEach((a) => (a.tags || []).forEach((t) => { counts[t] = (counts[t] || 0) + 1; }));
+    this.tagCounts = counts;
+    this.allTags = Object.keys(counts).sort((x, y) => counts[y] - counts[x] || x.localeCompare(y, "ru"));
+  }
+
   // ---- data ----
   async loadData() {
     try {
@@ -60,6 +87,7 @@ class Archive extends React.Component {
       if (!res.ok) throw new Error("http " + res.status);
       const data = await res.json();
       this.articles = data;
+      this.computeTags();
       await this.loadReviews(); // карта разборов — до первого рендера списка
       const initial = data.find((a) => a.local) || data[0] || null;
       this.setState({ appLoading: false, selectedId: initial ? initial.id : null });
@@ -472,9 +500,8 @@ class Archive extends React.Component {
     };
     const filtered = this.articles.filter(matches);
 
-    const counts = {};
-    this.articles.forEach((a) => a.tags.forEach((t) => { counts[t] = (counts[t] || 0) + 1; }));
-    const allTags = Object.keys(counts).sort((x, y) => counts[y] - counts[x] || x.localeCompare(y, "ru"));
+    const counts = this.tagCounts || {};
+    const allTags = this.allTags || [];
 
     const topTags = allTags.slice(0, 4);
     const visible = [...topTags];
@@ -866,7 +893,7 @@ class Archive extends React.Component {
                       Загрузка статьи…
                     </div>
                   )}
-                  {bodyReady && <div>{bodyEl}</div>}
+                  {bodyReady && <ErrorBoundary key={sel.id} url={sel.url}><div>{bodyEl}</div></ErrorBoundary>}
                   {notImported && (
                     <div className="arc-box-tan">
                       Эта статья ещё не импортирована в архив. После выгрузки её папки <code className="arc-code">{sel ? sel.folder : ""}</code> текст и изображения появятся здесь.

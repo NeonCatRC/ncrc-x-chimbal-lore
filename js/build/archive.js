@@ -15,6 +15,38 @@ const LANDING_URL = "https://neoncatrc.github.io/ncrc-x-chimbal/";
 // admin-api для записи overlay (только в режиме редактора, обычно через SSH-туннель
 // на 127.0.0.1). Переопределяется через window.CHIMBAL_ADMIN_API.
 const ADMIN_API = typeof window !== "undefined" && window.CHIMBAL_ADMIN_API || "http://localhost:8090";
+
+// Ловит ошибку рендера статьи, чтобы не падало всё приложение. key={id} в месте
+// использования сбрасывает состояние при переключении статьи.
+class ErrorBoundary extends React.Component {
+  state = {
+    error: null
+  };
+  static getDerivedStateFromError(error) {
+    return {
+      error
+    };
+  }
+  componentDidCatch(error, info) {
+    console.error("article render failed", error, info);
+  }
+  render() {
+    if (this.state.error) {
+      return /*#__PURE__*/React.createElement("div", {
+        className: "arc-box-red"
+      }, "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0442\u043E\u0431\u0440\u0430\u0437\u0438\u0442\u044C \u0441\u0442\u0430\u0442\u044C\u044E (\u043E\u0448\u0438\u0431\u043A\u0430 \u0440\u0435\u043D\u0434\u0435\u0440\u0430).", " ", /*#__PURE__*/React.createElement("a", {
+        href: this.props.url || "#",
+        target: "_blank",
+        rel: "noopener",
+        style: {
+          color: "#9d4b35",
+          fontWeight: 500
+        }
+      }, "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u043E\u0440\u0438\u0433\u0438\u043D\u0430\u043B \u2197"));
+    }
+    return this.props.children;
+  }
+}
 class Archive extends React.Component {
   state = {
     query: "",
@@ -81,6 +113,16 @@ class Archive extends React.Component {
     if (this.mainEl) this.mainEl.scrollTop = 0;
   };
 
+  // Теги и их счётчики постоянны после загрузки — считаем один раз, а не в render.
+  computeTags() {
+    const counts = {};
+    this.articles.forEach(a => (a.tags || []).forEach(t => {
+      counts[t] = (counts[t] || 0) + 1;
+    }));
+    this.tagCounts = counts;
+    this.allTags = Object.keys(counts).sort((x, y) => counts[y] - counts[x] || x.localeCompare(y, "ru"));
+  }
+
   // ---- data ----
   async loadData() {
     try {
@@ -88,6 +130,7 @@ class Archive extends React.Component {
       if (!res.ok) throw new Error("http " + res.status);
       const data = await res.json();
       this.articles = data;
+      this.computeTags();
       await this.loadReviews(); // карта разборов — до первого рендера списка
       const initial = data.find(a => a.local) || data[0] || null;
       this.setState({
@@ -792,11 +835,8 @@ class Archive extends React.Component {
       return textOk && tagOk && reviewOk;
     };
     const filtered = this.articles.filter(matches);
-    const counts = {};
-    this.articles.forEach(a => a.tags.forEach(t => {
-      counts[t] = (counts[t] || 0) + 1;
-    }));
-    const allTags = Object.keys(counts).sort((x, y) => counts[y] - counts[x] || x.localeCompare(y, "ru"));
+    const counts = this.tagCounts || {};
+    const allTags = this.allTags || [];
     const topTags = allTags.slice(0, 4);
     const visible = [...topTags];
     activeTags.forEach(t => {
@@ -1352,7 +1392,10 @@ class Archive extends React.Component {
       className: "arc-art-loading"
     }, /*#__PURE__*/React.createElement("div", {
       className: "arc-spin-sm"
-    }), "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0441\u0442\u0430\u0442\u044C\u0438\u2026"), bodyReady && /*#__PURE__*/React.createElement("div", null, bodyEl), notImported && /*#__PURE__*/React.createElement("div", {
+    }), "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0441\u0442\u0430\u0442\u044C\u0438\u2026"), bodyReady && /*#__PURE__*/React.createElement(ErrorBoundary, {
+      key: sel.id,
+      url: sel.url
+    }, /*#__PURE__*/React.createElement("div", null, bodyEl)), notImported && /*#__PURE__*/React.createElement("div", {
       className: "arc-box-tan"
     }, "\u042D\u0442\u0430 \u0441\u0442\u0430\u0442\u044C\u044F \u0435\u0449\u0451 \u043D\u0435 \u0438\u043C\u043F\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0430 \u0432 \u0430\u0440\u0445\u0438\u0432. \u041F\u043E\u0441\u043B\u0435 \u0432\u044B\u0433\u0440\u0443\u0437\u043A\u0438 \u0435\u0451 \u043F\u0430\u043F\u043A\u0438 ", /*#__PURE__*/React.createElement("code", {
       className: "arc-code"

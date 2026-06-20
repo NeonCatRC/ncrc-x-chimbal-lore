@@ -19,6 +19,11 @@ services:
     ports:
       - "8080:80"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/index.html >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
 
   # Запись overlay (комментарии/разборы). Только на 127.0.0.1, доступ по SSH-туннелю.
   # Единственный сервис с overlay:rw; контент НЕ монтирует вовсе. Профиль admin:
@@ -36,6 +41,11 @@ services:
     ports:
       - "127.0.0.1:8090:8090"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8090/health').status==200 else 1)\""]
+      interval: 30s
+      timeout: 3s
+      retries: 3
     profiles: ["admin"]
 
   # Апдейтер (ШАБЛОН — раскомментировать после добавления каталога ../updater).

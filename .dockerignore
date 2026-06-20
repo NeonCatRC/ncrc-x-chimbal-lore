@@ -4,6 +4,10 @@
 **/page_raw.html
 **/.done
 
+# Контент и overlay монтируются томами, а не зашиваются в образ.
+data
+overlay
+
 # build-time only — образу нужен лишь js/build (скомпилированный) и js/vendor
 node_modules
 **/*.jsx

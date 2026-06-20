@@ -1,6 +1,11 @@
-# Прод: собирает самодостаточный образ (nginx + сайт + картинки).
+# Прод: лёгкий образ nginx (только приложение) + контент отдельным томом.
 #   cd deploy && docker compose up -d --build
 # Сайт на http://<host>:8080  (TLS вешайте обратным прокси — см. README.md).
+#
+# CONTENT_DIR — путь на хосте с архивом (data/articles.json, reviews.json,
+# articles/<slug>/...). По умолчанию — data/ этого репозитория (для dev).
+# Для прода: CONTENT_DIR=/srv/chimbal/data docker compose up -d --build
+
 services:
   web:
     build:
@@ -8,6 +13,47 @@ services:
       dockerfile: deploy/Dockerfile
     image: ncrc-chimbal-lore:latest
     container_name: ncrc-chimbal-lore
+    volumes:
+      - ${CONTENT_DIR:-../data}:/usr/share/nginx/html/data:ro       # архив (неизменяемый)
+      - ${OVERLAY_DIR:-../overlay}:/usr/share/nginx/html/overlay:ro  # правки (читаем)
     ports:
       - "8080:80"
     restart: unless-stopped
+
+  # Запись overlay (комментарии/разборы). Только на 127.0.0.1, доступ по SSH-туннелю.
+  # Единственный сервис с overlay:rw; контент НЕ монтирует вовсе. Профиль admin:
+  #   docker compose --profile admin up -d --build admin-api
+  admin-api:
+    build:
+      context: ../admin-api
+    image: ncrc-chimbal-admin-api:latest
+    container_name: ncrc-chimbal-admin-api
+    volumes:
+      - ${OVERLAY_DIR:-../overlay}:/overlay:rw
+    environment:
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-}
+      - ALLOW_ORIGIN=${ADMIN_ALLOW_ORIGIN:-*}
+    ports:
+      - "127.0.0.1:8090:8090"
+    restart: unless-stopped
+    profiles: ["admin"]
+
+  # Апдейтер (ШАБЛОН — раскомментировать после добавления каталога ../updater).
+  # Тянет новые статьи overclockers.ru в тот же том (:rw) и пересобирает
+  # data/articles.json. Тот же том, что у web, но :rw. Запуск с профилем:
+  #   docker compose --profile updater up -d --build updater
+  #
+  # updater:
+  #   build:
+  #     context: ../updater
+  #     dockerfile: Dockerfile
+  #   image: ncrc-chimbal-updater:latest
+  #   container_name: ncrc-chimbal-updater
+  #   volumes:
+  #     - ${CONTENT_DIR:-../data}:/data:rw
+  #   environment:
+  #     - UPDATE_INTERVAL=21600      # период опроса, сек (6 ч)
+  #     - MAX_IMAGE_SIDE=1000        # ресайз картинок как в архиве
+  #     - JPEG_QUALITY=72
+  #   restart: unless-stopped
+  #   profiles: ["updater"]

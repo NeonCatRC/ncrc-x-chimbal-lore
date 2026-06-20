@@ -12,6 +12,9 @@
  * тулбара/попапа, цвета палитры).
  */
 const LANDING_URL = "https://neoncatrc.github.io/ncrc-x-chimbal/";
+// admin-api для записи overlay (только в режиме редактора, обычно через SSH-туннель
+// на 127.0.0.1). Переопределяется через window.CHIMBAL_ADMIN_API.
+const ADMIN_API = typeof window !== "undefined" && window.CHIMBAL_ADMIN_API || "http://localhost:8090";
 class Archive extends React.Component {
   state = {
     query: "",
@@ -139,7 +142,7 @@ class Archive extends React.Component {
       this.htmlCache[a.id] = cleaned;
       let fileAnno = [];
       try {
-        const fr = await fetch("./data/articles/" + a.folder + "/annotations.json");
+        const fr = await fetch("./overlay/annotations/" + a.id + ".json");
         if (fr.ok) {
           const j = await fr.json();
           if (Array.isArray(j)) fileAnno = j;
@@ -203,7 +206,7 @@ class Archive extends React.Component {
   }
   async loadReviews() {
     try {
-      const r = await fetch("./data/reviews.json");
+      const r = await fetch("./overlay/reviews.json");
       if (r.ok) {
         const j = await r.json();
         if (j && typeof j === "object" && !Array.isArray(j)) this.fileReviews = j;
@@ -343,7 +346,7 @@ class Archive extends React.Component {
 
   // Собираем всю карту разборов (только reviewed: true — отсутствие = не разобрано)
   // и отдаём как data/reviews.json для коммита.
-  exportReview = () => {
+  collectReviews() {
     const ids = new Set([...Object.keys(this.fileReviews), ...Object.keys(this.reviewStore)]);
     const out = {};
     [...ids].sort().forEach(id => {
@@ -353,6 +356,36 @@ class Archive extends React.Component {
         requestsAtReview: Number(e.requestsAtReview) || 0
       };
     });
+    return out;
+  }
+
+  // POST в admin-api (overlay). Бросает при недоступности — вызыватель делает фолбэк.
+  async postOverlay(path, payload) {
+    const res = await fetch(ADMIN_API + path, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error("http " + res.status);
+  }
+
+  // Сохранить разборы: сначала на сервер, при недоступности — скачать файл.
+  saveReview = async () => {
+    const out = this.collectReviews();
+    try {
+      await this.postOverlay("/reviews", out);
+      this.fileReviews = out;
+      this.setState(s => ({
+        reviewTick: s.reviewTick + 1
+      }));
+    } catch (e) {
+      this.exportReview();
+    }
+  };
+  exportReview = () => {
+    const out = this.collectReviews();
     const blob = new Blob([JSON.stringify(out, null, 1)], {
       type: "application/json"
     });
@@ -572,6 +605,41 @@ class Archive extends React.Component {
     this.setState(s => ({
       annoTick: s.annoTick + 1
     }));
+  };
+
+  // Сохранить пометки статьи: сначала на сервер (overlay), иначе скачать файл.
+  saveAnnos = async () => {
+    const id = this.state.selectedId;
+    const arr = this.annosFor(id);
+    try {
+      await this.postOverlay("/annotations/" + id, arr);
+      this.fileAnnos[id] = arr.slice();
+      this.setState(s => ({
+        annoTick: s.annoTick + 1
+      }));
+    } catch (e) {
+      this.exportAnnos();
+    }
+  };
+
+  // Импорт ранее выгруженного annotations.json обратно в сессию (перенос между браузерами).
+  importAnnos = e => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const j = JSON.parse(reader.result);
+        if (Array.isArray(j)) {
+          this.persist(this.state.selectedId, j);
+          this.setState(s => ({
+            annoTick: s.annoTick + 1
+          }));
+        }
+      } catch (err) {/* битый файл — игнор */}
+    };
+    reader.readAsText(file);
   };
   resetAnnos = () => {
     const id = this.state.selectedId;
@@ -1214,8 +1282,8 @@ class Archive extends React.Component {
       onClick: this.toggleReviewed
     }, reviewed ? "↩ Вернуть кнопку" : "✓ Отметить разобранным"), dirtyReview && /*#__PURE__*/React.createElement("button", {
       className: "arc-btn-green",
-      onClick: this.exportReview
-    }, "\u2193 \u042D\u043A\u0441\u043F\u043E\u0440\u0442 reviews.json"))), annos.length > 0 && /*#__PURE__*/React.createElement("div", {
+      onClick: this.saveReview
+    }, "\uD83D\uDCBE \u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0440\u0430\u0437\u0431\u043E\u0440\u044B"))), annos.length > 0 && /*#__PURE__*/React.createElement("div", {
       className: "arc-panel"
     }, /*#__PURE__*/React.createElement("button", {
       onClick: this.togglePanel,
@@ -1260,12 +1328,27 @@ class Archive extends React.Component {
     }, "\uD83D\uDDD1")))), adminMode && /*#__PURE__*/React.createElement("div", {
       className: "arc-export-bar"
     }, /*#__PURE__*/React.createElement("button", {
-      onClick: this.exportAnnos,
+      onClick: this.saveAnnos,
       className: "arc-btn-green"
-    }, "\u2193 \u042D\u043A\u0441\u043F\u043E\u0440\u0442 annotations.json"), dirty && /*#__PURE__*/React.createElement("button", {
+    }, "\uD83D\uDCBE \u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C"), /*#__PURE__*/React.createElement("label", {
+      className: "arc-btn-tan",
+      style: {
+        cursor: "pointer"
+      }
+    }, "\u2191 \u0418\u043C\u043F\u043E\u0440\u0442", /*#__PURE__*/React.createElement("input", {
+      type: "file",
+      accept: "application/json,.json",
+      onChange: this.importAnnos,
+      style: {
+        display: "none"
+      }
+    })), /*#__PURE__*/React.createElement("button", {
+      onClick: this.exportAnnos,
+      className: "arc-btn-tan"
+    }, "\u2193 \u042D\u043A\u0441\u043F\u043E\u0440\u0442"), dirty && /*#__PURE__*/React.createElement("button", {
       onClick: this.resetAnnos,
       className: "arc-btn-tan"
-    }, "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C \u043A \u0444\u0430\u0439\u043B\u0443")))), articleLoading && /*#__PURE__*/React.createElement("div", {
+    }, "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C")))), articleLoading && /*#__PURE__*/React.createElement("div", {
       className: "arc-art-loading"
     }, /*#__PURE__*/React.createElement("div", {
       className: "arc-spin-sm"

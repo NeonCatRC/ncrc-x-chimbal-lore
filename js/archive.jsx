@@ -10,6 +10,9 @@
  * тулбара/попапа, цвета палитры).
  */
 const LANDING_URL = "https://neoncatrc.github.io/ncrc-x-chimbal/";
+// admin-api для записи overlay (только в режиме редактора, обычно через SSH-туннель
+// на 127.0.0.1). Переопределяется через window.CHIMBAL_ADMIN_API.
+const ADMIN_API = (typeof window !== "undefined" && window.CHIMBAL_ADMIN_API) || "http://localhost:8090";
 
 class Archive extends React.Component {
   state = {
@@ -81,7 +84,7 @@ class Archive extends React.Component {
       if (meta) { cleaned.title = meta.title || null; cleaned.date = meta.date || null; }
       this.htmlCache[a.id] = cleaned;
       let fileAnno = [];
-      try { const fr = await fetch("./data/articles/" + a.folder + "/annotations.json"); if (fr.ok) { const j = await fr.json(); if (Array.isArray(j)) fileAnno = j; } } catch (e) {}
+      try { const fr = await fetch("./overlay/annotations/" + a.id + ".json"); if (fr.ok) { const j = await fr.json(); if (Array.isArray(j)) fileAnno = j; } } catch (e) {}
       this.fileAnnos[a.id] = fileAnno;
       if (this.loadAnnos(a.id) == null) this.annoStore[a.id] = fileAnno.slice();
       if (this.state.selectedId === a.id) this.setState({ articleLoading: false });
@@ -127,7 +130,7 @@ class Archive extends React.Component {
   }
   async loadReviews() {
     try {
-      const r = await fetch("./data/reviews.json");
+      const r = await fetch("./overlay/reviews.json");
       if (r.ok) { const j = await r.json(); if (j && typeof j === "object" && !Array.isArray(j)) this.fileReviews = j; }
     } catch (e) {}
   }
@@ -203,13 +206,38 @@ class Archive extends React.Component {
 
   // Собираем всю карту разборов (только reviewed: true — отсутствие = не разобрано)
   // и отдаём как data/reviews.json для коммита.
-  exportReview = () => {
+  collectReviews() {
     const ids = new Set([...Object.keys(this.fileReviews), ...Object.keys(this.reviewStore)]);
     const out = {};
     [...ids].sort().forEach((id) => {
       const e = this.reviewFor(id);
       if (e.reviewed) out[id] = { reviewed: true, requestsAtReview: Number(e.requestsAtReview) || 0 };
     });
+    return out;
+  }
+
+  // POST в admin-api (overlay). Бросает при недоступности — вызыватель делает фолбэк.
+  async postOverlay(path, payload) {
+    const res = await fetch(ADMIN_API + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error("http " + res.status);
+  }
+
+  // Сохранить разборы: сначала на сервер, при недоступности — скачать файл.
+  saveReview = async () => {
+    const out = this.collectReviews();
+    try {
+      await this.postOverlay("/reviews", out);
+      this.fileReviews = out;
+      this.setState((s) => ({ reviewTick: s.reviewTick + 1 }));
+    } catch (e) { this.exportReview(); }
+  };
+
+  exportReview = () => {
+    const out = this.collectReviews();
     const blob = new Blob([JSON.stringify(out, null, 1)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -331,6 +359,35 @@ class Archive extends React.Component {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     this.fileAnnos[id] = arr.slice();
     this.setState((s) => ({ annoTick: s.annoTick + 1 }));
+  };
+
+  // Сохранить пометки статьи: сначала на сервер (overlay), иначе скачать файл.
+  saveAnnos = async () => {
+    const id = this.state.selectedId;
+    const arr = this.annosFor(id);
+    try {
+      await this.postOverlay("/annotations/" + id, arr);
+      this.fileAnnos[id] = arr.slice();
+      this.setState((s) => ({ annoTick: s.annoTick + 1 }));
+    } catch (e) { this.exportAnnos(); }
+  };
+
+  // Импорт ранее выгруженного annotations.json обратно в сессию (перенос между браузерами).
+  importAnnos = (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const j = JSON.parse(reader.result);
+        if (Array.isArray(j)) {
+          this.persist(this.state.selectedId, j);
+          this.setState((s) => ({ annoTick: s.annoTick + 1 }));
+        }
+      } catch (err) { /* битый файл — игнор */ }
+    };
+    reader.readAsText(file);
   };
 
   resetAnnos = () => {
@@ -756,7 +813,7 @@ class Archive extends React.Component {
                     {adminMode && (
                       <div className="arc-cta-admin">
                         <button className="arc-btn-tan" onClick={this.toggleReviewed}>{reviewed ? "↩ Вернуть кнопку" : "✓ Отметить разобранным"}</button>
-                        {dirtyReview && <button className="arc-btn-green" onClick={this.exportReview}>↓ Экспорт reviews.json</button>}
+                        {dirtyReview && <button className="arc-btn-green" onClick={this.saveReview}>💾 Сохранить разборы</button>}
                       </div>
                     )}
                   </div>
@@ -790,8 +847,12 @@ class Archive extends React.Component {
                           ))}
                           {adminMode && (
                             <div className="arc-export-bar">
-                              <button onClick={this.exportAnnos} className="arc-btn-green">↓ Экспорт annotations.json</button>
-                              {dirty && <button onClick={this.resetAnnos} className="arc-btn-tan">Сбросить к файлу</button>}
+                              <button onClick={this.saveAnnos} className="arc-btn-green">💾 Сохранить</button>
+                              <label className="arc-btn-tan" style={{ cursor: "pointer" }}>↑ Импорт
+                                <input type="file" accept="application/json,.json" onChange={this.importAnnos} style={{ display: "none" }} />
+                              </label>
+                              <button onClick={this.exportAnnos} className="arc-btn-tan">↓ Экспорт</button>
+                              {dirty && <button onClick={this.resetAnnos} className="arc-btn-tan">Сбросить</button>}
                             </div>
                           )}
                         </div>

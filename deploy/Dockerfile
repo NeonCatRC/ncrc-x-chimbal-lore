@@ -5,8 +5,9 @@ FROM nginx:1.27-alpine
 # Конфиг сервера.
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Сайт целиком (контекст = корень). .dockerignore держит .git, page_raw.html,
-# .done и доки вне образа.
+# Только приложение (index.html, css, js, assets/fonts). Контент (data/) НЕ
+# зашивается — он монтируется томом в рантайме. .dockerignore держит data/, .git,
+# page_raw.html, .done, jsx-исходники и доки вне образа.
 COPY . /usr/share/nginx/html
 
 # Убираем служебные файлы, попавшие в веб-корень широким COPY.

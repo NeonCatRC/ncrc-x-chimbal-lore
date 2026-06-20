@@ -1,9 +1,11 @@
 node_modules/
 
-# Контент статей (HTML + картинки) — вне git: репозиторий хранит только
-# приложение и стек деплоя. Полный архив разворачивается на сервере отдельно.
-# (data/articles/index.json и data/*.json — индексы приложения, остаются.)
-data/articles/*/
+# Контент и overlay — вне git: репозиторий хранит только приложение и стек.
+#   data/    — архив (HTML+картинки) + articles.json/index.json (правит апдейтер)
+#   overlay/ — изменяемый слой правок (annotations/<id>.json, reviews.json)
+# Оба монтируются томами на сервере (CONTENT_DIR / OVERLAY_DIR).
+data/
+overlay/
 
 # временные файлы проверки/сборки
 .verify/

@@ -1,62 +1,83 @@
 # Деплой — self-host на своём сервере
 
-Сайт полностью статический (HTML + JSON + картинки). Бэкенд не нужен: счётчик
-запросов (`js/requests.js`) бьёт в публичный Abacus API из браузера. Отдаём
-одним nginx. React лежит локально, JSX предкомпилирован — сторонних CDN нет.
+Сайт статический (HTML + JSON + картинки). React локально, JSX предкомпилирован —
+сторонних CDN нет. Чтение — один nginx. Запись правок (комментарии/разборы) —
+отдельный admin-api только на 127.0.0.1.
 
-## Стек
+## Тома и образы
 
-- **nginx:1.27-alpine** — единственный сервис.
-- Конфиг: [`nginx.conf`](nginx.conf) — gzip для текста, `immutable` кэш для
-  картинок/шрифтов, ревалидация для HTML/JSON/JS, запрет dotfiles.
+| что | где | монтаж |
+|-----|-----|--------|
+| приложение | образ `web` (nginx) | — |
+| контент архива | `CONTENT_DIR` | web: `/…/html/data` **:ro** |
+| слой правок | `OVERLAY_DIR` | web: `/…/html/overlay` **:ro**; admin-api: `/overlay` **:rw** |
 
-## Контент статей (важно)
+Контент и overlay в образ НЕ зашиваются (`.dockerignore`). Пересборка приложения
+не трогает гигабайты картинок.
 
-Контент статей — `data/articles/<slug>/{index.html, images/, meta.json, …}` —
-**не в git** (см. `.gitignore`): репозиторий хранит только приложение и стек
-деплоя. В git остаются лишь индексы `data/articles.json`, `data/reviews.json`,
-`data/articles/index.json`.
-
-Перед сборкой образа разверните полную копию архива в `data/articles/` (rsync /
-распаковка вашего бэкапа). Структура: `data/articles/<slug>/images/<file>`.
-`docker compose build` упакует всё, что лежит в дереве, в образ.
-
-## Фронтенд (предкомпиляция JSX)
-
-Компоненты пишутся в `js/*.jsx`, в браузер уходит обычный JS из `js/build/`.
-После правки `.jsx` пересоберите:
-
-```bash
-npm install        # один раз (babel-тулчейн, dev-зависимости)
-npm run build      # js/*.jsx -> js/build/*.js
+```
+/usr/share/nginx/html/
+├── index.html  css/  js/  assets/      ← образ web
+├── data/                               ← CONTENT_DIR (:ro)
+│   ├── articles.json
+│   └── articles/<slug>/{index.html, images/, meta.json}
+└── overlay/                            ← OVERLAY_DIR (:ro для web)
+    ├── reviews.json
+    └── annotations/<id>.json
 ```
 
-`js/build/` и `js/vendor/` (локальный React) коммитятся — на сервере сборка не
-нужна, nginx отдаёт готовое.
+## Почему так (защита от случайного редактирования)
 
-## Запуск (прод, самодостаточный образ)
+- `web` монтирует контент и overlay **только :ro** — веб-сервер физически не
+  может ничего изменить.
+- Единственный, кто пишет, — `admin-api`, и он монтирует **только overlay :rw**
+  (контент ему недоступен вообще). Слушает 127.0.0.1, доступ по SSH-туннелю.
+- Контент-архив неизменяем; меняется лишь overlay и лишь через admin-api.
+
+## Запуск
 
 ```bash
 cd deploy
-docker compose up -d --build      # http://<host>:8080
+# прод: контент и overlay — постоянные каталоги хоста
+CONTENT_DIR=/srv/chimbal/data OVERLAY_DIR=/srv/chimbal/overlay \
+  docker compose up -d --build                       # сайт на :8080 (read-only)
+# редактирование (по необходимости): поднять admin-api на 127.0.0.1:8090
+CONTENT_DIR=… OVERLAY_DIR=… docker compose --profile admin up -d --build admin-api
 ```
 
-Образ включает картинки (~3 ГБ при полном архиве). Собирайте там, где контент уже
-развёрнут, или пушьте образ в свой registry.
+dev без переменных → берутся `../data` и `../overlay` репозитория.
 
-## Запуск (dev / без сборки, bind-mount)
+## Комментарии и разборы (admin-api)
 
-Без большого образа — монтируем рабочее дерево напрямую (dotfiles закрыты в конфиге):
+В режиме редактора кнопки «💾 Сохранить» шлют POST на admin-api → пишет
+`overlay/annotations/<id>.json` и `overlay/reviews.json`. Если admin-api недоступен —
+фолбэк: «↓ Экспорт» (скачать) и «↑ Импорт» (загрузить обратно). Правишь удалённо:
 
 ```bash
-docker run --rm -p 8080:80 \
-  -v "$PWD/..":/usr/share/nginx/html:ro \
-  -v "$PWD/nginx.conf":/etc/nginx/conf.d/default.conf:ro \
-  nginx:1.27-alpine
+ssh -L 8080:localhost:8080 -L 8090:localhost:8090 user@server
+# сайт localhost:8080; сохранение уходит на localhost:8090 (admin-api)
+```
+
+Подробнее: [../admin-api/README.md](../admin-api/README.md). Токен — env `ADMIN_TOKEN`.
+
+## Миграция на overlay (один раз)
+
+Если правки лежали внутри папок статей (старый формат) — перенести:
+
+```bash
+python deploy/migrate-overlay.py CONTENT_DIR OVERLAY_DIR
+# data/articles/<id>_*/annotations.json -> overlay/annotations/<id>.json
+# data/reviews.json                     -> overlay/reviews.json
+```
+
+## Фронтенд (предкомпиляция JSX)
+
+```bash
+npm install        # один раз
+npm run build      # js/*.jsx -> js/build/*.js (коммитится)
 ```
 
 ## TLS / домен
 
-Контейнер слушает только HTTP:80. TLS вешайте обратным прокси на хосте
-(Caddy/Traefik/nginx) — он терминирует HTTPS и проксирует на `:8080`. Включите
-там HTTP/2.
+Контейнер `web` слушает HTTP:80. TLS — обратным прокси на хосте
+(Caddy/Traefik/nginx), HTTP/2 там же. admin-api за прокси НЕ выставлять.

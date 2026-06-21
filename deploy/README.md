@@ -70,6 +70,23 @@ python deploy/migrate-overlay.py CONTENT_DIR OVERLAY_DIR
 # data/reviews.json                     -> overlay/reviews.json
 ```
 
+## Экспортёр статей (наполнение контента)
+
+Контейнер `updater` тянет новые посты overclockers.ru в тот же том контента
+(`:rw`) и обновляет `articles.json`. web читает том `:ro` вживую — перезапуск не
+нужен. Контракт — [../docs/exporter-spec.md](../docs/exporter-spec.md), реализация —
+репозиторий overclockers-exporter. Образ `overclockers-content-exporter:latest`
+собирается из того репозитория (по его Dockerfile/инструкции), затем:
+
+```bash
+# профиль updater (не стартует при обычном up):
+CONTENT_DIR=/srv/chimbal/data docker compose --profile updater up -d updater
+```
+
+Перед боевым запуском — сухой прогон: `DRY_RUN=1 RUN_ONCE=1` (скан без записи).
+Проверено: вывод экспортёра отдаётся web 1:1 (структура, `articles.json`,
+сжатие ≤1000px). Пишет атомарно, права 0644, идемпотентно, overlay не трогает.
+
 ## Фронтенд (предкомпиляция JSX)
 
 ```bash

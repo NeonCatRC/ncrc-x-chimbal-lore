@@ -48,22 +48,23 @@ services:
       retries: 3
     profiles: ["admin"]
 
-  # Апдейтер (ШАБЛОН — раскомментировать после добавления каталога ../updater).
-  # Тянет новые статьи overclockers.ru в тот же том (:rw) и пересобирает
-  # data/articles.json. Тот же том, что у web, но :rw. Запуск с профилем:
-  #   docker compose --profile updater up -d --build updater
-  #
-  # updater:
-  #   build:
-  #     context: ../updater
-  #     dockerfile: Dockerfile
-  #   image: ncrc-chimbal-updater:latest
-  #   container_name: ncrc-chimbal-updater
-  #   volumes:
-  #     - ${CONTENT_DIR:-../data}:/data:rw
-  #   environment:
-  #     - UPDATE_INTERVAL=21600      # период опроса, сек (6 ч)
-  #     - MAX_IMAGE_SIDE=1000        # ресайз картинок как в архиве
-  #     - JPEG_QUALITY=72
-  #   restart: unless-stopped
-  #   profiles: ["updater"]
+  # Экспортёр статей (overclockers-exporter): тянет новые посты в тот же том
+  # контента (:rw) и обновляет articles.json. Контракт — docs/exporter-spec.md.
+  # Образ overclockers-content-exporter:latest собирается из репозитория
+  # экспортёра по его собственной инструкции (Dockerfile/compose внутри него).
+  # Тот же том, что у web, но :rw. Профиль updater (не стартует при обычном up):
+  #   docker compose --profile updater up -d updater
+  updater:
+    image: overclockers-content-exporter:latest
+    container_name: ncrc-chimbal-updater
+    volumes:
+      - ${CONTENT_DIR:-../data}:/data:rw
+    environment:
+      - CONTENT_DIR=/data
+      - BLOG_URL=https://overclockers.ru/blog/Hard-Workshop
+      - UPDATE_INTERVAL=21600        # период опроса, сек (6 ч)
+      - MAX_IMAGE_SIDE=1000          # ресайз картинок как в архиве
+      - JPEG_QUALITY=72
+      - REQUEST_DELAY_MS=1000        # пауза между запросами (вежливость)
+    restart: unless-stopped
+    profiles: ["updater"]

@@ -36,8 +36,10 @@ services:
     restart: unless-stopped
 
   # Опционально: экспортёр (нужен собранный образ overclockers-content-exporter).
-  # По умолчанию — безопасный сухой прогон (RUN_ONCE+DRY_RUN, ничего не пишет):
+  # ПИШЕТ 1 реальную статью за прогон в dev-данные (чтобы увидеть live-обновление
+  # списка в браузере — список сам подтянет её за ~60с или при возврате фокуса):
   #   docker compose -f docker-compose.dev.yml --profile updater up updater
+  # Скан без записи — добавить `-e DRY_RUN=1` к команде run.
   updater:
     image: overclockers-content-exporter:latest
     container_name: chimbal-dev-updater
@@ -47,6 +49,6 @@ services:
       - CONTENT_DIR=/data
       - BLOG_URL=https://overclockers.ru/blog/Hard-Workshop
       - RUN_ONCE=1
-      - DRY_RUN=1
-      - MAX_PER_RUN=2
+      - MAX_PER_RUN=1
+      - DRY_RUN=0          # пишет реально (для теста live-обновления)
     profiles: ["updater"]

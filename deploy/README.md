@@ -47,6 +47,22 @@ CONTENT_DIR=… OVERLAY_DIR=… docker compose --profile admin up -d --build adm
 
 dev без переменных → берутся `../data` и `../overlay` репозитория.
 
+## Локальный тест (всё одним файлом)
+
+[`docker-compose.dev.yml`](docker-compose.dev.yml) — web (без сборки, монтирует
+рабочее дерево) + admin-api (правки работают сразу). Контент/overlay — dev-копии
+репозитория.
+
+```bash
+cd deploy
+docker compose -f docker-compose.dev.yml up -d        # http://localhost:8080
+docker compose -f docker-compose.dev.yml down
+# опционально сухой прогон экспортёра (нужен его образ):
+docker compose -f docker-compose.dev.yml --profile updater up updater
+```
+
+Правки `js/css/html` видны сразу; после правки `.jsx` — `npm run build`.
+
 ## Комментарии и разборы (admin-api)
 
 В режиме редактора кнопки «💾 Сохранить» шлют POST на admin-api → пишет

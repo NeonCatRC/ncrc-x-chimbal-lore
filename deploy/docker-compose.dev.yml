@@ -1,0 +1,52 @@
+# Локальный тест всего стека одним файлом (из каталога deploy/):
+#   docker compose -f docker-compose.dev.yml up -d
+#   открыть http://localhost:8080
+#   admin-api для правок: 127.0.0.1:8090 (кнопки «Сохранить» работают сразу)
+#   остановить: docker compose -f docker-compose.dev.yml down
+#
+# Отличия от прод (docker-compose.yml):
+#   * web НЕ собирается — монтируем рабочее дерево как docroot (правки
+#     js/css/html видны сразу; после правки .jsx нужен `npm run build`);
+#   * контент и overlay — dev-копии из репозитория (data/, overlay/);
+#   * admin-api активен без профиля (для правок в локальном тесте).
+name: chimbal-dev
+
+services:
+  web:
+    image: nginx:1.27-alpine
+    container_name: chimbal-dev-web
+    volumes:
+      - ../:/usr/share/nginx/html:ro                       # дерево = docroot (app+data+overlay)
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+  admin-api:
+    build:
+      context: ../admin-api
+    image: ncrc-chimbal-admin-api:latest
+    container_name: chimbal-dev-admin-api
+    volumes:
+      - ../overlay:/overlay:rw
+    environment:
+      - ALLOW_ORIGIN=*
+    ports:
+      - "127.0.0.1:8090:8090"
+    restart: unless-stopped
+
+  # Опционально: экспортёр (нужен собранный образ overclockers-content-exporter).
+  # По умолчанию — безопасный сухой прогон (RUN_ONCE+DRY_RUN, ничего не пишет):
+  #   docker compose -f docker-compose.dev.yml --profile updater up updater
+  updater:
+    image: overclockers-content-exporter:latest
+    container_name: chimbal-dev-updater
+    volumes:
+      - ../data:/data:rw
+    environment:
+      - CONTENT_DIR=/data
+      - BLOG_URL=https://overclockers.ru/blog/Hard-Workshop
+      - RUN_ONCE=1
+      - DRY_RUN=1
+      - MAX_PER_RUN=2
+    profiles: ["updater"]

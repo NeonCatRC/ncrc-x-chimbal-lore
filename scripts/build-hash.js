@@ -30,10 +30,12 @@ for (const rel of ASSETS) {
   fs.writeFileSync(abs + ".gz", zlib.gzipSync(buf, { level: 9 }));
 
   const esc = rel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const re = new RegExp("([\"'])" + esc + "(?:\\?v=[a-f0-9]+)?\\1", "g");
-  const next = html.replace(re, "$1" + rel + "?v=" + hash + "$1");
-  if (next === html) console.warn("WARN: ref not found in index.html:", rel);
-  html = next;
+  const pat = "([\"'])" + esc + "(?:\\?v=[a-f0-9]+)?\\1";
+  if (!new RegExp(pat).test(html)) {
+    console.warn("WARN: ref not found in index.html:", rel);
+    continue;
+  }
+  html = html.replace(new RegExp(pat, "g"), "$1" + rel + "?v=" + hash + "$1");
 }
 
 fs.writeFileSync(htmlPath, html);

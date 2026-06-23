@@ -88,6 +88,7 @@ class Archive extends React.Component {
       const data = await res.json();
       this.articles = data;
       this.computeTags();
+      this._listSig = this.listSig(data);
       await this.loadReviews(); // карта разборов — до первого рендера списка
       const initial = data.find((a) => a.local) || data[0] || null;
       this.setState({ appLoading: false, selectedId: initial ? initial.id : null });
@@ -468,7 +469,43 @@ class Archive extends React.Component {
   });
 
   // ---- lifecycle ----
-  componentDidMount() { this.loadOverrides(); this.loadData(); }
+  componentDidMount() { this.loadOverrides(); this.loadData(); this.startAutoRefresh(); }
+  componentWillUnmount() {
+    if (this._refreshTimer) clearInterval(this._refreshTimer);
+    if (this._onVisible) document.removeEventListener("visibilitychange", this._onVisible);
+  }
+
+  // Список статей пополняет апдейтер на сервере. Периодически перечитываем
+  // articles.json (no-cache → 304, когда без изменений) + при возврате фокуса,
+  // чтобы новые статьи появлялись без перезагрузки страницы.
+  REFRESH_MS = 60000;
+  listSig(arr) { return arr.length + "|" + arr.map((a) => a.id + (a.local ? "1" : "0")).join(","); }
+  startAutoRefresh() {
+    this._refreshTimer = setInterval(() => this.refreshList(), this.REFRESH_MS);
+    this._onVisible = () => { if (!document.hidden) this.refreshList(); };
+    document.addEventListener("visibilitychange", this._onVisible);
+  }
+  async refreshList() {
+    if (this.state.appLoading || this._refreshing) return;
+    this._refreshing = true;
+    try {
+      const res = await fetch("./data/articles.json");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && this.listSig(data) !== this._listSig) {
+          this._listSig = this.listSig(data);
+          this.articles = data;
+          this.computeTags();
+          await this.loadReviews();
+          // открытую статью только что импортировал апдейтер — подгрузим контент
+          const sel = this.articles.find((a) => a.id === this.state.selectedId);
+          if (sel && sel.local && !this.htmlCache[sel.id]) this.loadArticle(sel);
+          this.forceUpdate();
+        }
+      }
+    } catch (e) { /* offline/transient — игнор */ }
+    this._refreshing = false;
+  }
 
   // ---- view helpers ----
   chipBase() {

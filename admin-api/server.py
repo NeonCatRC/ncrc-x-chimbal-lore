@@ -91,6 +91,12 @@ class Handler(BaseHTTPRequestHandler):
             write_json(os.path.join(OVERLAY, "reviews.json"), data)
             return self._send(200, {"ok": True})
 
+        if self.path == "/tags":
+            if not isinstance(data, dict):
+                return self._send(400, {"error": "expected object"})
+            write_json(os.path.join(OVERLAY, "tags.json"), data)
+            return self._send(200, {"ok": True})
+
         self._send(404, {"error": "not found"})
 
     def log_message(self, fmt, *args):

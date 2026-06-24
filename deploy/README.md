@@ -23,6 +23,7 @@
 │   └── articles/<slug>/{index.html, images/, meta.json}
 └── overlay/                            ← OVERLAY_DIR (:ro для web)
     ├── reviews.json
+    ├── tags.json
     └── annotations/<id>.json
 ```
 

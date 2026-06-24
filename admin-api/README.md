@@ -11,6 +11,7 @@ SSH-туннель. Публично НЕ выставлять.
 | GET   | `/health` | — | `{"ok":true}` |
 | POST  | `/annotations/<id>` | JSON-массив | `overlay/annotations/<id>.json` |
 | POST  | `/reviews` | JSON-объект | `overlay/reviews.json` |
+| POST  | `/tags` | JSON-объект `{id:[теги]}` | `overlay/tags.json` |
 
 `<id>` — только цифры (защита от path traversal). Тело ≤ 5 МБ.
 

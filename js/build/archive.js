@@ -68,7 +68,10 @@ class Archive extends React.Component {
     reqDone: false,
     reqBusy: false,
     reviewTick: 0,
-    reviewFilter: null // null | "reviewed" | "pending"
+    reviewFilter: null,
+    // null | "reviewed" | "pending"
+    tagDraft: "",
+    tagTick: 0
   };
   articles = [];
   htmlCache = {};
@@ -76,6 +79,8 @@ class Archive extends React.Component {
   fileAnnos = {};
   reviewStore = {}; // локальные override'ы статуса (localStorage + правки админа в сессии)
   fileReviews = {}; // закоммиченная карта { id: {reviewed, requestsAtReview} } из data/reviews.json
+  tagStore = {}; // правки тегов в сессии/localStorage (override scraped-тегов статьи)
+  fileTags = {}; // карта { id: [теги] } из overlay/tags.json
   currentSel = null;
   LIST_CAP = 90;
 
@@ -113,15 +118,104 @@ class Archive extends React.Component {
     if (this.mainEl) this.mainEl.scrollTop = 0;
   };
 
-  // Теги и их счётчики постоянны после загрузки — считаем один раз, а не в render.
+  // Эффективные теги статьи: правка админа (tagStore) → overlay (fileTags) →
+  // scraped из articles.json (a.tags).
+  articleTags(a) {
+    if (!a) return [];
+    return this.tagStore[a.id] || this.fileTags[a.id] || a.tags || [];
+  }
+
+  // Счётчики тегов для фильтра. Пересчитываем при загрузке и после правки тегов.
   computeTags() {
     const counts = {};
-    this.articles.forEach(a => (a.tags || []).forEach(t => {
+    this.articles.forEach(a => this.articleTags(a).forEach(t => {
       counts[t] = (counts[t] || 0) + 1;
     }));
     this.tagCounts = counts;
     this.allTags = Object.keys(counts).sort((x, y) => counts[y] - counts[x] || x.localeCompare(y, "ru"));
   }
+
+  // ---- теги (правка в режиме редактора, override через overlay/tags.json) ----
+  TAGS_LS = "chimbal.tags.v1.";
+  async loadTags() {
+    try {
+      const r = await fetch("./overlay/tags.json");
+      if (r.ok) {
+        const j = await r.json();
+        if (j && typeof j === "object" && !Array.isArray(j)) this.fileTags = j;
+      }
+    } catch (e) {}
+  }
+  persistTags(id, arr) {
+    this.tagStore[id] = arr;
+    try {
+      localStorage.setItem(this.TAGS_LS + id, JSON.stringify(arr));
+    } catch (e) {}
+    this.computeTags();
+  }
+  setTagDraft = e => this.setState({
+    tagDraft: e.target.value
+  });
+  addTag = () => {
+    const id = this.state.selectedId;
+    if (!id) return;
+    const t = (this.state.tagDraft || "").trim();
+    if (!t) return;
+    const cur = this.articleTags(this.articles.find(a => a.id === id)).slice();
+    if (!cur.some(x => x.toLowerCase() === t.toLowerCase())) cur.push(t);
+    this.persistTags(id, cur);
+    this.setState(s => ({
+      tagDraft: "",
+      tagTick: s.tagTick + 1
+    }));
+  };
+  removeTag = t => {
+    const id = this.state.selectedId;
+    if (!id) return;
+    const cur = this.articleTags(this.articles.find(a => a.id === id)).filter(x => x !== t);
+    this.persistTags(id, cur);
+    this.setState(s => ({
+      tagTick: s.tagTick + 1
+    }));
+  };
+  collectTags() {
+    const out = {};
+    new Set([...Object.keys(this.fileTags), ...Object.keys(this.tagStore)]).forEach(id => {
+      const t = this.tagStore[id] || this.fileTags[id];
+      if (t) out[id] = t;
+    });
+    return out;
+  }
+  saveTags = async () => {
+    const out = this.collectTags();
+    try {
+      await this.postOverlay("/tags", out);
+      this.fileTags = out;
+      this.setState(s => ({
+        tagTick: s.tagTick + 1
+      }));
+    } catch (e) {
+      this.exportTags();
+    }
+  };
+  exportTags = () => {
+    const out = this.collectTags();
+    const blob = new Blob([JSON.stringify(out, null, 1)], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "tags.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    this.fileTags = out;
+    this.setState(s => ({
+      tagTick: s.tagTick + 1
+    }));
+  };
 
   // ---- data ----
   async loadData() {
@@ -130,9 +224,10 @@ class Archive extends React.Component {
       if (!res.ok) throw new Error("http " + res.status);
       const data = await res.json();
       this.articles = data;
-      this.computeTags();
       this._listSig = this.listSig(data);
       await this.loadReviews(); // карта разборов — до первого рендера списка
+      await this.loadTags(); // override-теги — до computeTags
+      this.computeTags();
       const initial = data.find(a => a.local) || data[0] || null;
       this.setState({
         appLoading: false,
@@ -243,6 +338,12 @@ class Archive extends React.Component {
           try {
             const v = JSON.parse(localStorage.getItem(k));
             if (v) this.reviewStore[id] = v;
+          } catch (e) {}
+        } else if (k && k.indexOf(this.TAGS_LS) === 0) {
+          const id = k.slice(this.TAGS_LS.length);
+          try {
+            const v = JSON.parse(localStorage.getItem(k));
+            if (Array.isArray(v)) this.tagStore[id] = v;
           } catch (e) {}
         }
       }
@@ -809,8 +910,9 @@ class Archive extends React.Component {
         if (Array.isArray(data) && this.listSig(data) !== this._listSig) {
           this._listSig = this.listSig(data);
           this.articles = data;
-          this.computeTags();
           await this.loadReviews();
+          await this.loadTags();
+          this.computeTags();
           // открытую статью только что импортировал апдейтер — подгрузим контент
           const sel = this.articles.find(a => a.id === this.state.selectedId);
           if (sel && sel.local && !this.htmlCache[sel.id]) this.loadArticle(sel);
@@ -871,8 +973,9 @@ class Archive extends React.Component {
     } = this.state;
     const q = query.trim().toLowerCase();
     const matches = a => {
-      const textOk = !q || (a.title + " " + a.tags.join(" ") + " " + a.slug).toLowerCase().includes(q);
-      const tagOk = activeTags.length === 0 || a.tags.some(t => activeTags.includes(t));
+      const atags = this.articleTags(a);
+      const textOk = !q || (a.title + " " + atags.join(" ") + " " + a.slug).toLowerCase().includes(q);
+      const tagOk = activeTags.length === 0 || atags.some(t => activeTags.includes(t));
       const reviewOk = !reviewFilter || (this.reviewFor(a.id).reviewed ? reviewFilter === "reviewed" : reviewFilter === "pending");
       return textOk && tagOk && reviewOk;
     };
@@ -946,7 +1049,7 @@ class Archive extends React.Component {
         id: a.id,
         title: a.title,
         date: this.fmtDate(a.date) || "—",
-        tagsLabel: a.tags.join(" · "),
+        tagsLabel: this.articleTags(a).join(" · "),
         reviewed: this.reviewFor(a.id).reviewed,
         select: () => this.select(a.id),
         style: {
@@ -971,6 +1074,8 @@ class Archive extends React.Component {
       };
     });
     const sel = this.articles.find(a => a.id === selectedId) || null;
+    const selTags = this.articleTags(sel);
+    const selTagsDirty = !!sel && JSON.stringify(selTags) !== JSON.stringify(this.fileTags[sel.id] || sel.tags || []);
     const hasSelection = !appLoading && !!sel;
     const cached = sel ? this.htmlCache[sel.id] : null;
     const isLocal = sel ? !!sel.local : false;
@@ -1324,10 +1429,65 @@ class Archive extends React.Component {
       }
     }, "\u270E"), " \u0412\u044B\u0434\u0435\u043B\u0438\u0442\u0435 \u0442\u0435\u043A\u0441\u0442 \u043C\u044B\u0448\u044C\u044E \u2014 \u043F\u043E\u044F\u0432\u0438\u0442\u0441\u044F \u043F\u0430\u043B\u0438\u0442\u0440\u0430 \u043F\u043E\u0434\u0441\u0432\u0435\u0442\u043A\u0438 \u0438 \u043A\u043D\u043E\u043F\u043A\u0430 \u043A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u044F. \u041C\u043E\u0436\u043D\u043E \u0432\u044B\u0434\u0435\u043B\u0438\u0442\u044C \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u043E \u043C\u0435\u0441\u0442 \u0441\u0440\u0430\u0437\u0443, \u0443\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u044F Ctrl. \u041A\u043B\u0438\u043A \u043F\u043E \u043F\u043E\u043C\u0435\u0442\u043A\u0435 \u043E\u0442\u043A\u0440\u044B\u0432\u0430\u0435\u0442 \u0435\u0451."), /*#__PURE__*/React.createElement("div", {
       className: "arc-tags"
-    }, (sel ? sel.tags : []).map((t, i) => /*#__PURE__*/React.createElement("span", {
+    }, selTags.map((t, i) => /*#__PURE__*/React.createElement("span", {
       key: i,
       className: "arc-tag"
-    }, t))), /*#__PURE__*/React.createElement("h1", {
+    }, t, adminMode && /*#__PURE__*/React.createElement("button", {
+      onClick: () => this.removeTag(t),
+      title: "\u0423\u0431\u0440\u0430\u0442\u044C \u0442\u0435\u0433",
+      style: {
+        marginLeft: "6px",
+        border: "none",
+        background: "transparent",
+        color: "inherit",
+        cursor: "pointer",
+        fontSize: "12px",
+        opacity: 0.65
+      }
+    }, "\xD7"))), adminMode && /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "5px"
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      list: "arc-all-tags",
+      value: this.state.tagDraft,
+      onChange: this.setTagDraft,
+      onKeyDown: e => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          this.addTag();
+        }
+      },
+      placeholder: "+ \u0442\u0435\u0433",
+      style: {
+        width: "120px",
+        padding: "3px 8px",
+        borderRadius: "12px",
+        border: "1px solid #d8cfbd",
+        background: "#fff",
+        fontSize: "12px",
+        fontFamily: "'JetBrains Mono', monospace"
+      }
+    }), /*#__PURE__*/React.createElement("button", {
+      onClick: this.addTag,
+      className: "arc-btn-tan",
+      style: {
+        padding: "3px 9px"
+      }
+    }, "+"), selTagsDirty && /*#__PURE__*/React.createElement("button", {
+      onClick: this.saveTags,
+      className: "arc-btn-green",
+      style: {
+        padding: "3px 9px"
+      }
+    }, "\uD83D\uDCBE \u0442\u0435\u0433\u0438"), /*#__PURE__*/React.createElement("datalist", {
+      id: "arc-all-tags"
+    }, allTags.map(t => /*#__PURE__*/React.createElement("option", {
+      key: t,
+      value: t
+    }))))), /*#__PURE__*/React.createElement("h1", {
       lang: "ru",
       className: "arc-h1"
     }, realTitle), /*#__PURE__*/React.createElement("div", {

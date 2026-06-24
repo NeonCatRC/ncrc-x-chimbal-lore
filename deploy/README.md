@@ -35,18 +35,42 @@
   (контент ему недоступен вообще). Слушает 127.0.0.1, доступ по SSH-туннелю.
 - Контент-архив неизменяем; меняется лишь overlay и лишь через admin-api.
 
-## Запуск
+## Запуск (прод — pull из ghcr)
+
+Образы приватные в `ghcr.io/neoncatrc/*`. На сервере один раз залогиниться
+(PAT с `read:packages`):
 
 ```bash
-cd deploy
-# прод: контент и overlay — постоянные каталоги хоста
-CONTENT_DIR=/srv/chimbal/data OVERLAY_DIR=/srv/chimbal/overlay \
-  docker compose up -d --build                       # сайт на :8080 (read-only)
-# редактирование (по необходимости): поднять admin-api на 127.0.0.1:8090
-CONTENT_DIR=… OVERLAY_DIR=… docker compose --profile admin up -d --build admin-api
+echo "$GHCR_PAT" | docker login ghcr.io -u NeonCatRC --password-stdin
 ```
 
-dev без переменных → берутся `../data` и `../overlay` репозитория.
+Затем (из каталога `deploy/`):
+
+```bash
+export CONTENT_DIR=/srv/chimbal/data OVERLAY_DIR=/srv/chimbal/overlay
+docker compose pull && docker compose up -d            # сайт на :8080 (read-only)
+# редактирование (по необходимости): admin-api на 127.0.0.1:8090
+docker compose --profile admin up -d admin-api
+# апдейтер статей (нужен его образ в ghcr): 
+docker compose --profile updater up -d updater
+```
+
+Переменные не заданы → берутся `../data` и `../overlay` репозитория.
+
+## Сборка и публикация образов
+
+Образы собираются локально и пушатся в ghcr (приватные по умолчанию).
+После правок кода и `npm run build`:
+
+```bash
+docker build -f deploy/Dockerfile -t ghcr.io/neoncatrc/ncrc-chimbal-lore:latest .
+docker build -t ghcr.io/neoncatrc/ncrc-chimbal-admin-api:latest admin-api
+docker push ghcr.io/neoncatrc/ncrc-chimbal-lore:latest
+docker push ghcr.io/neoncatrc/ncrc-chimbal-admin-api:latest
+```
+
+Для воспроизводимого деплоя пушьте и версионный тег (`:v1`, git-sha) и
+указывайте его в compose вместо `:latest`.
 
 ## Локальный тест (всё одним файлом)
 

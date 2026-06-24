@@ -1,17 +1,15 @@
-# Прод: лёгкий образ nginx (только приложение) + контент отдельным томом.
-#   cd deploy && docker compose up -d --build
-# Сайт на http://<host>:8080  (TLS вешайте обратным прокси — см. README.md).
+# Прод: образы тянутся из ghcr (приватные) + контент/overlay отдельными томами.
+#   docker login ghcr.io          # приватный pull (PAT с read:packages)
+#   CONTENT_DIR=/srv/chimbal/data OVERLAY_DIR=/srv/chimbal/overlay \
+#     docker compose pull && docker compose up -d        # сайт на :8080
+# TLS — обратным прокси (см. README.md). Локальная сборка/тест — docker-compose.dev.yml.
 #
-# CONTENT_DIR — путь на хосте с архивом (data/articles.json, reviews.json,
-# articles/<slug>/...). По умолчанию — data/ этого репозитория (для dev).
-# Для прода: CONTENT_DIR=/srv/chimbal/data docker compose up -d --build
+# CONTENT_DIR/OVERLAY_DIR — пути на хосте с архивом и слоем правок;
+# по умолчанию data/ и overlay/ репозитория.
 
 services:
   web:
-    build:
-      context: ..
-      dockerfile: deploy/Dockerfile
-    image: ncrc-chimbal-lore:latest
+    image: ghcr.io/neoncatrc/ncrc-chimbal-lore:latest
     container_name: ncrc-chimbal-lore
     volumes:
       - ${CONTENT_DIR:-../data}:/usr/share/nginx/html/data:ro       # архив (неизменяемый)
@@ -29,9 +27,7 @@ services:
   # Единственный сервис с overlay:rw; контент НЕ монтирует вовсе. Профиль admin:
   #   docker compose --profile admin up -d --build admin-api
   admin-api:
-    build:
-      context: ../admin-api
-    image: ncrc-chimbal-admin-api:latest
+    image: ghcr.io/neoncatrc/ncrc-chimbal-admin-api:latest
     container_name: ncrc-chimbal-admin-api
     volumes:
       - ${OVERLAY_DIR:-../overlay}:/overlay:rw
@@ -50,12 +46,12 @@ services:
 
   # Экспортёр статей (overclockers-exporter): тянет новые посты в тот же том
   # контента (:rw) и обновляет articles.json. Контракт — docs/exporter-spec.md.
-  # Образ overclockers-content-exporter:latest собирается из репозитория
-  # экспортёра по его собственной инструкции (Dockerfile/compose внутри него).
+  # Образ собирается из репозитория экспортёра и пушится в ghcr:
+  #   docker push ghcr.io/neoncatrc/overclockers-content-exporter:latest
   # Тот же том, что у web, но :rw. Профиль updater (не стартует при обычном up):
   #   docker compose --profile updater up -d updater
   updater:
-    image: overclockers-content-exporter:latest
+    image: ghcr.io/neoncatrc/overclockers-content-exporter:latest
     container_name: ncrc-chimbal-updater
     volumes:
       - ${CONTENT_DIR:-../data}:/data:rw

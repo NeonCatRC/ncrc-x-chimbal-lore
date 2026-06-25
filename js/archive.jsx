@@ -10,6 +10,7 @@
  * тулбара/попапа, цвета палитры).
  */
 const LANDING_URL = "https://neoncatrc.github.io/ncrc-x-chimbal/";
+const ISSUES_URL = "https://github.com/neoncatrc/ncrc-x-chimbal/issues/new";
 // admin-api для записи overlay (только в режиме редактора, обычно через SSH-туннель
 // на 127.0.0.1). Переопределяется через window.CHIMBAL_ADMIN_API.
 const ADMIN_API = (typeof window !== "undefined" && window.CHIMBAL_ADMIN_API) || "http://localhost:8090";
@@ -42,7 +43,8 @@ class Archive extends React.Component {
     toolbar: null, note: null, annoTick: 0, panelOpen: true,
     reqLoading: false, reqCount: null, reqDone: false, reqBusy: false, reviewTick: 0,
     reviewFilter: null,  // null | "reviewed" | "pending"
-    tagDraft: "", tagTick: 0
+    tagDraft: "", tagTick: 0,
+    helpOpen: false
   };
 
   articles = [];
@@ -533,6 +535,9 @@ class Archive extends React.Component {
   acceptGate = () => { try { localStorage.setItem("chimbal.gate.v1", "1"); } catch (e) {} this.setState({ gateOpen: false }); };
   declineGate = () => { window.location.href = LANDING_URL; };
 
+  toggleHelp = () => this.setState((s) => ({ helpOpen: !s.helpOpen }));
+  closeHelp = () => this.setState({ helpOpen: false });
+
   toggleAdmin = () => this.setState((s) => {
     const v = !s.adminMode;
     try { localStorage.setItem("chimbal.admin.v1", v ? "1" : "0"); } catch (e) {}
@@ -598,7 +603,7 @@ class Archive extends React.Component {
   }
 
   render() {
-    const { query, activeTags, selectedId, tagMenuOpen, appLoading, articleLoading, articleErr, adminMode, toolbar, note, reqLoading, reqCount, reqDone, reqBusy, reviewFilter } = this.state;
+    const { query, activeTags, selectedId, tagMenuOpen, appLoading, articleLoading, articleErr, adminMode, toolbar, note, reqLoading, reqCount, reqDone, reqBusy, reviewFilter, helpOpen } = this.state;
     const q = query.trim().toLowerCase();
 
     const matches = (a) => {
@@ -666,7 +671,7 @@ class Archive extends React.Component {
         titleStyle: {
           fontFamily: "'Golos Text', sans-serif",
           fontSize: "16px", fontWeight: 500, lineHeight: "1.3", marginBottom: "6px",
-          color: selected ? "#ffffff" : "#e9e6f5"
+          color: selected ? "#ffffff" : "#e9e6f5", overflowWrap: "break-word"
         }
       };
     });
@@ -883,8 +888,7 @@ class Archive extends React.Component {
                   </div>
                   <div className="arc-item-meta">
                     <span>{item.date}</span>
-                    <span style={{ opacity: 0.5 }}>·</span>
-                    <span className="arc-item-tags">{item.tagsLabel}</span>
+                    {item.tagsLabel && <span className="arc-item-tags">{item.tagsLabel}</span>}
                   </div>
                 </button>
               ))}
@@ -958,9 +962,20 @@ class Archive extends React.Component {
                       </div>
                     ) : (
                       <div className="arc-cta-ask">
-                        <span className="arc-cta-head">
+                        <span className="arc-cta-head" style={{ position: "relative" }}>
                           <span className="arc-cta-q">?</span>
                           <span className="arc-cta-text">Разбора пока нет</span>
+                          <button onClick={this.toggleHelp} className="arc-cta-help-btn" title="Как предложить разбор?">ⓘ</button>
+                          {helpOpen && (
+                            <React.Fragment>
+                              <div className="arc-cta-help-veil" onClick={this.closeHelp} />
+                              <div className="arc-cta-help">
+                                <div className="arc-cta-help-title">Как предложить разбор?</div>
+                                <p className="arc-cta-help-text">Нажмите «Хочу разбор ✦» — это увеличит счётчик запросов. Для подробного обсуждения или контекста создайте Issue на GitHub — автор его увидит.</p>
+                                <a href={ISSUES_URL} target="_blank" rel="noopener" className="arc-cta-help-link">Создать Issue на GitHub ↗</a>
+                              </div>
+                            </React.Fragment>
+                          )}
                         </span>
                         <button
                           className={"arc-cta-btn" + (reqDone ? " is-done" : "")}

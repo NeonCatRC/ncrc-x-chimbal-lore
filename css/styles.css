@@ -175,10 +175,14 @@ body { background: #04030c; }
 .arc-item-ic.is-done { background: rgba(57,255,139,0.15); color: #5ff0a0; }
 .arc-item-ic.is-pending { background: rgba(226,180,80,0.14); color: #e6b45a; }
 .arc-item-meta {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
   font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: rgba(214,210,235,0.42);
 }
-.arc-item-tags { color: #6fdba0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arc-item-tags {
+  color: #6fdba0;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow: hidden; word-break: break-word;
+}
 .arc-more {
   padding: 16px 20px 26px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
   color: rgba(214,210,235,0.4); line-height: 1.7;
@@ -272,6 +276,33 @@ body { background: #04030c; }
   border-radius: 50%; background: #f6ead0; color: #c2761f; font-size: 13px; font-weight: 700; flex: 0 0 auto;
 }
 .arc-cta-admin { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+
+.arc-cta-help-veil { position: fixed; inset: 0; z-index: 40; }
+.arc-cta-help {
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 50;
+  width: 280px; padding: 14px 16px;
+  background: #fbf6ec; border: 1px solid #e7ddca; border-radius: 12px;
+  box-shadow: 0 16px 40px -12px rgba(0,0,0,0.25);
+}
+.arc-cta-help-title {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: #b07a66; margin-bottom: 8px;
+}
+.arc-cta-help-text {
+  font-family: 'Onest', sans-serif; font-size: 13px; color: #6b6253; line-height: 1.5;
+  margin: 0 0 10px;
+}
+.arc-cta-help-link {
+  font-family: 'Onest', sans-serif; font-size: 13px; font-weight: 600;
+  color: #9d4b35; text-decoration: underline; text-underline-offset: 2px;
+}
+.arc-cta-help-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 1px solid #d8cfbd; background: #f6ece7;
+  color: #9d4b35; font-size: 12px; cursor: pointer; padding: 0; margin-left: 4px;
+}
+.arc-cta-help-btn:hover { background: #f0e0d8; }
 
 /* ── панель пометок ─────────────────────────────────────────── */
 .arc-panel { margin: 0 0 30px; border: 1px solid #e7ddca; border-radius: 12px; background: #fbf6ec; overflow: hidden; }

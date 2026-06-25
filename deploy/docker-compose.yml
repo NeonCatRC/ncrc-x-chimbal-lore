@@ -62,5 +62,6 @@ services:
       - MAX_IMAGE_SIDE=1000          # ресайз картинок как в архиве
       - JPEG_QUALITY=72
       - REQUEST_DELAY_MS=1000        # пауза между запросами (вежливость)
+      - DRY_RUN=0                    # реально писать статьи (дефолт экспортёра — сухой прогон)
     restart: unless-stopped
     profiles: ["updater"]

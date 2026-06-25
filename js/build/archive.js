@@ -12,6 +12,7 @@
  * тулбара/попапа, цвета палитры).
  */
 const LANDING_URL = "https://neoncatrc.github.io/ncrc-x-chimbal/";
+const ISSUES_URL = "https://github.com/neoncatrc/ncrc-x-chimbal/issues/new";
 // admin-api для записи overlay (только в режиме редактора, обычно через SSH-туннель
 // на 127.0.0.1). Переопределяется через window.CHIMBAL_ADMIN_API.
 const ADMIN_API = typeof window !== "undefined" && window.CHIMBAL_ADMIN_API || "http://localhost:8090";
@@ -71,7 +72,8 @@ class Archive extends React.Component {
     reviewFilter: null,
     // null | "reviewed" | "pending"
     tagDraft: "",
-    tagTick: 0
+    tagTick: 0,
+    helpOpen: false
   };
   articles = [];
   htmlCache = {};
@@ -863,6 +865,12 @@ class Archive extends React.Component {
   declineGate = () => {
     window.location.href = LANDING_URL;
   };
+  toggleHelp = () => this.setState(s => ({
+    helpOpen: !s.helpOpen
+  }));
+  closeHelp = () => this.setState({
+    helpOpen: false
+  });
   toggleAdmin = () => this.setState(s => {
     const v = !s.adminMode;
     try {
@@ -969,7 +977,8 @@ class Archive extends React.Component {
       reqCount,
       reqDone,
       reqBusy,
-      reviewFilter
+      reviewFilter,
+      helpOpen
     } = this.state;
     const q = query.trim().toLowerCase();
     const matches = a => {
@@ -1069,7 +1078,8 @@ class Archive extends React.Component {
           fontWeight: 500,
           lineHeight: "1.3",
           marginBottom: "6px",
-          color: selected ? "#ffffff" : "#e9e6f5"
+          color: selected ? "#ffffff" : "#e9e6f5",
+          overflowWrap: "break-word"
         }
       };
     });
@@ -1389,11 +1399,7 @@ class Archive extends React.Component {
       title: item.reviewed ? "Разобрано" : "Разбора пока нет"
     }, item.reviewed ? "✓" : "?")), /*#__PURE__*/React.createElement("div", {
       className: "arc-item-meta"
-    }, /*#__PURE__*/React.createElement("span", null, item.date), /*#__PURE__*/React.createElement("span", {
-      style: {
-        opacity: 0.5
-      }
-    }, "\xB7"), /*#__PURE__*/React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", null, item.date), item.tagsLabel && /*#__PURE__*/React.createElement("span", {
       className: "arc-item-tags"
     }, item.tagsLabel)))), moreInList && /*#__PURE__*/React.createElement("div", {
       className: "arc-more"
@@ -1506,12 +1512,33 @@ class Archive extends React.Component {
     }, "\u2713"), /*#__PURE__*/React.createElement("span", null, "\u0420\u0430\u0437\u043E\u0431\u0440\u0430\u043D\u043E", reviewedCount > 0 ? " · по запросу " + this.fmtNum(reviewedCount) : "")) : /*#__PURE__*/React.createElement("div", {
       className: "arc-cta-ask"
     }, /*#__PURE__*/React.createElement("span", {
-      className: "arc-cta-head"
+      className: "arc-cta-head",
+      style: {
+        position: "relative"
+      }
     }, /*#__PURE__*/React.createElement("span", {
       className: "arc-cta-q"
     }, "?"), /*#__PURE__*/React.createElement("span", {
       className: "arc-cta-text"
-    }, "\u0420\u0430\u0437\u0431\u043E\u0440\u0430 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442")), /*#__PURE__*/React.createElement("button", {
+    }, "\u0420\u0430\u0437\u0431\u043E\u0440\u0430 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442"), /*#__PURE__*/React.createElement("button", {
+      onClick: this.toggleHelp,
+      className: "arc-cta-help-btn",
+      title: "\u041A\u0430\u043A \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0438\u0442\u044C \u0440\u0430\u0437\u0431\u043E\u0440?"
+    }, "\u24D8"), helpOpen && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "arc-cta-help-veil",
+      onClick: this.closeHelp
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "arc-cta-help"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "arc-cta-help-title"
+    }, "\u041A\u0430\u043A \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0438\u0442\u044C \u0440\u0430\u0437\u0431\u043E\u0440?"), /*#__PURE__*/React.createElement("p", {
+      className: "arc-cta-help-text"
+    }, "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \xAB\u0425\u043E\u0447\u0443 \u0440\u0430\u0437\u0431\u043E\u0440 \u2726\xBB \u2014 \u044D\u0442\u043E \u0443\u0432\u0435\u043B\u0438\u0447\u0438\u0442 \u0441\u0447\u0451\u0442\u0447\u0438\u043A \u0437\u0430\u043F\u0440\u043E\u0441\u043E\u0432. \u0414\u043B\u044F \u043F\u043E\u0434\u0440\u043E\u0431\u043D\u043E\u0433\u043E \u043E\u0431\u0441\u0443\u0436\u0434\u0435\u043D\u0438\u044F \u0438\u043B\u0438 \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0430 \u0441\u043E\u0437\u0434\u0430\u0439\u0442\u0435 Issue \u043D\u0430 GitHub \u2014 \u0430\u0432\u0442\u043E\u0440 \u0435\u0433\u043E \u0443\u0432\u0438\u0434\u0438\u0442."), /*#__PURE__*/React.createElement("a", {
+      href: ISSUES_URL,
+      target: "_blank",
+      rel: "noopener",
+      className: "arc-cta-help-link"
+    }, "\u0421\u043E\u0437\u0434\u0430\u0442\u044C Issue \u043D\u0430 GitHub \u2197")))), /*#__PURE__*/React.createElement("button", {
       className: "arc-cta-btn" + (reqDone ? " is-done" : ""),
       onClick: this.requestAnalysis,
       disabled: reqDone || reqBusy || reqLoading
